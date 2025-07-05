@@ -1,15 +1,17 @@
-// src/pages/Explore.jsx
-
 import React, { useEffect, useState } from 'react';
 import {
   Container,
   Grid,
+  Typography,
+  Box,
+  IconButton,
+  CircularProgress,
+  Grow,
   TextField,
   Autocomplete,
   Card,
   CardContent,
   CardMedia,
-  Typography,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -20,11 +22,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Box,
-  IconButton,
-  CircularProgress,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import fallbackCountries from '../data/fallbackCountries.js';
 
@@ -44,12 +43,15 @@ export default function Explore() {
   const [searchValue, setSearchValue] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [sortBy, setSortBy] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);  // <-- declare loading here
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [openModal, setOpenModal] = useState(false);
-  const navigate = useNavigate();
 
-  // fetch + fallback
+  const navigate = useNavigate();
+  const location = useLocation();
+  const userName = location.state?.userName || '';
+
+  // Fetch countries data
   useEffect(() => {
     (async () => {
       try {
@@ -68,19 +70,21 @@ export default function Explore() {
     })();
   }, []);
 
-  // central filter/sort
+  // Filtering & sorting logic
   const applyFilters = (search, region, sortKey) => {
     let list = [...countries];
     if (region) list = list.filter((c) => c.region === region);
-    if (search) list = list.filter((c) =>
-      c.name.toLowerCase().includes(search.toLowerCase())
-    );
+    if (search)
+      list = list.filter((c) =>
+        c.name.toLowerCase().includes(search.toLowerCase())
+      );
     if (sortKey === 'name') list.sort((a, b) => a.name.localeCompare(b.name));
-    if (sortKey === 'population') list.sort((a, b) => (b.population||0) - (a.population||0));
+    if (sortKey === 'population')
+      list.sort((a, b) => (b.population || 0) - (a.population || 0));
     setFiltered(list);
   };
 
-  // handlers
+  // Handlers for filter/sort inputs
   const handleSearchInput = (_, value) => {
     setSearchValue(value);
     applyFilters(value, regionFilter, sortBy);
@@ -100,27 +104,62 @@ export default function Explore() {
     setSortBy(s);
     applyFilters(searchValue, regionFilter, s);
   };
-  const openCountry = (c) => { setSelectedCountry(c); setOpenModal(true); };
+
+  const openCountry = (c) => {
+    setSelectedCountry(c);
+    setOpenModal(true);
+  };
   const closeCountry = () => setOpenModal(false);
 
-  const regions = Array.from(new Set(countries.map((c) => c.region))).filter(Boolean);
+  const regions = Array.from(new Set(countries.map((c) => c.region))).filter(
+    Boolean
+  );
 
   return (
-    <Box sx={{ py: 5, background: 'linear-gradient(to right,#e0f7fa,#fff3e0)', minHeight: '100vh' }}>
+    <Box
+      sx={{
+        py: 5,
+        background: 'linear-gradient(to right,#e0f7fa,#fff3e0)',
+        minHeight: '100vh',
+      }}
+    >
       <Container>
-        {/* header */}
         <Box display="flex" justifyContent="space-between" mb={3}>
           <Typography variant="h3" fontWeight="bold" color="primary.main">
             Explore Countries
           </Typography>
-          <IconButton onClick={() => navigate('/')}><ArrowBackIcon fontSize="large"/></IconButton>
+          <IconButton onClick={() => navigate('/')}>
+            <ArrowBackIcon fontSize="large" />
+          </IconButton>
         </Box>
 
+        {/* Animated Welcome Message */}
+        {userName && (
+          <Grow in timeout={1500}>
+            <Typography
+              variant="h5"
+              color="secondary.main"
+              sx={{
+                mb: 4,
+                fontWeight: 'medium',
+                fontFamily: '"Comic Sans MS", cursive',
+                letterSpacing: '0.05em',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
+              }}
+            >
+              🎉 Hey <strong>{userName}</strong>! Get ready to dive deep into the
+              world and sharpen your geography skills! 🌍✨
+            </Typography>
+          </Grow>
+        )}
+
         {loading ? (
-          <Box sx={{ display:'flex', justifyContent:'center', py:10 }}><CircularProgress/></Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+            <CircularProgress />
+          </Box>
         ) : (
           <>
-            {/* controlled autocomplete */}
+            {/* Search box */}
             <Autocomplete
               freeSolo
               disableClearable
@@ -129,20 +168,35 @@ export default function Explore() {
               onInputChange={handleSearchInput}
               onChange={handleSearchSelect}
               getOptionLabel={(opt) => opt.name}
-              renderOption={(props,opt)=>(
-                <li {...props} key={opt.alpha2Code} style={{display:'flex',alignItems:'center'}}>
-                  <img src={opt.flags.png} alt="" width={24} style={{marginRight:8}}/>
+              renderOption={(props, opt) => (
+                <li
+                  {...props}
+                  key={opt.alpha2Code}
+                  style={{ display: 'flex', alignItems: 'center' }}
+                >
+                  <img
+                    src={opt.flags.png}
+                    alt=""
+                    width={24}
+                    style={{ marginRight: 8 }}
+                  />
                   {opt.name}
                 </li>
               )}
-              renderInput={(params)=>(
-                <TextField {...params} label="Search Countries" variant="outlined" fullWidth sx={{mb:3}}/>
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Search Countries"
+                  variant="outlined"
+                  fullWidth
+                  sx={{ mb: 3 }}
+                />
               )}
             />
 
-            {/* filters */}
-            <Box sx={{display:'flex',gap:2,flexWrap:'wrap',mb:4}}>
-              <FormControl sx={{minWidth:200}}>
+            {/* Filters */}
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
+              <FormControl sx={{ minWidth: 200 }}>
                 <InputLabel>Sort By</InputLabel>
                 <Select value={sortBy} label="Sort By" onChange={handleSortChange}>
                   <MenuItem value="">None</MenuItem>
@@ -150,48 +204,86 @@ export default function Explore() {
                   <MenuItem value="population">Population</MenuItem>
                 </Select>
               </FormControl>
-              <FormControl sx={{minWidth:200}}>
+              <FormControl sx={{ minWidth: 200 }}>
                 <InputLabel>Filter by Region</InputLabel>
-                <Select value={regionFilter} label="Filter by Region" onChange={handleRegionChange}>
+                <Select
+                  value={regionFilter}
+                  label="Filter by Region"
+                  onChange={handleRegionChange}
+                >
                   <MenuItem value="">All</MenuItem>
-                  {regions.map((r)=><MenuItem key={r} value={r}>{r}</MenuItem>)}
+                  {regions.map((r) => (
+                    <MenuItem key={r} value={r}>
+                      {r}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
 
-            {/* cards */}
+            {/* Country cards */}
             <Grid container spacing={3}>
-              {filtered.map((c)=>(
+              {filtered.map((c) => (
                 <Grid item xs={12} sm={6} md={4} lg={3} key={c.alpha2Code}>
-                  <Card onClick={()=>openCountry(c)}
-                    sx={{cursor:'pointer',bgcolor:'#fff3e0',transition:'transform .3s','&:hover':{transform:'scale(1.05)',boxShadow:4},borderRadius:3}}>
-                    <CardMedia component="img" height="140" image={c.flags.png} alt={c.name}/>
+                  <Card
+                    onClick={() => openCountry(c)}
+                    sx={{
+                      cursor: 'pointer',
+                      bgcolor: '#fff3e0',
+                      transition: 'transform .3s',
+                      '&:hover': { transform: 'scale(1.05)', boxShadow: 4 },
+                      borderRadius: 3,
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={c.flags.png}
+                      alt={c.name}
+                    />
                     <CardContent>
                       <Typography variant="h6" fontWeight="bold">
                         {getFlagEmoji(c.alpha2Code)} {c.name}
                       </Typography>
-                      <Typography variant="body2"><strong>Capital:</strong> {c.capital||'N/A'}</Typography>
-                      <Typography variant="body2"><strong>Population:</strong> {c.population?.toLocaleString()||'N/A'}</Typography>
-                      <Typography variant="body2"><strong>Currency:</strong> {c.currencies?.[0]?.name||'N/A'}</Typography>
+                      <Typography variant="body2">
+                        <strong>Capital:</strong> {c.capital || 'N/A'}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Population:</strong>{' '}
+                        {c.population?.toLocaleString() || 'N/A'}
+                      </Typography>
+                      <Typography variant="body2">
+                        <strong>Currency:</strong>{' '}
+                        {c.currencies?.[0]?.name || 'N/A'}
+                      </Typography>
                     </CardContent>
                   </Card>
                 </Grid>
               ))}
             </Grid>
 
-            {/* modal */}
+            {/* Modal for selected country */}
             <Dialog open={openModal} onClose={closeCountry}>
-              <DialogTitle>{selectedCountry?.name} {getFlagEmoji(selectedCountry?.alpha2Code)}</DialogTitle>
+              <DialogTitle>
+                {selectedCountry?.name} {getFlagEmoji(selectedCountry?.alpha2Code)}
+              </DialogTitle>
               <DialogContent>
                 <DialogContentText>
-                  <strong>Capital:</strong> {selectedCountry?.capital||'N/A'}<br/>
-                  <strong>Region:</strong> {selectedCountry?.region||'N/A'}<br/>
-                  <strong>Population:</strong> {selectedCountry?.population?.toLocaleString()||'N/A'}<br/>
-                  <strong>Currency:</strong> {selectedCountry?.currencies?.[0]?.name||'N/A'}
+                  <strong>Capital:</strong> {selectedCountry?.capital || 'N/A'}
+                  <br />
+                  <strong>Region:</strong> {selectedCountry?.region || 'N/A'}
+                  <br />
+                  <strong>Population:</strong>{' '}
+                  {selectedCountry?.population?.toLocaleString() || 'N/A'}
+                  <br />
+                  <strong>Currency:</strong>{' '}
+                  {selectedCountry?.currencies?.[0]?.name || 'N/A'}
                 </DialogContentText>
               </DialogContent>
               <DialogActions>
-                <Button onClick={closeCountry} color="primary">Close</Button>
+                <Button onClick={closeCountry} color="primary">
+                  Close
+                </Button>
               </DialogActions>
             </Dialog>
           </>

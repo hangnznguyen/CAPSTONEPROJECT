@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Container,
   Typography,
@@ -11,8 +11,8 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { keyframes } from '@mui/system';
 import { Typewriter } from 'react-simple-typewriter';
+import { useQuiz } from '../context/QuizContext'; // import your context
 
-// 🎯 Bounce-in animation for headline
 const headlineAnimation = keyframes`
   0% { transform: translateY(-20px); opacity: 0 }
   50% { transform: translateY(10px); opacity: 1 }
@@ -20,15 +20,16 @@ const headlineAnimation = keyframes`
 `;
 
 const Home = () => {
-  const [nickname, setNickname] = useState('');
+  const { userName, setUserName } = useQuiz(); // get context state
   const navigate = useNavigate();
 
   const handleStart = () => {
-    if (nickname.trim() === '') {
+    if (userName.trim() === '') {
       alert('Please enter your nickname');
       return;
     }
-    navigate('/quiz', { state: { nickname } });
+    // no need to pass nickname in navigate state
+    navigate('/quiz');
   };
 
   const handleLearn = () => {
@@ -39,7 +40,7 @@ const Home = () => {
     <Box
       sx={{
         minHeight: 'calc(100vh - 64px)',
-        backgroundImage: 'url(/assets/images/globe-bg.jpg)', // Update this path as needed
+        backgroundImage: 'url(/assets/images/globe-bg.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         display: 'flex',
@@ -58,7 +59,6 @@ const Home = () => {
           boxShadow: 4,
         }}
       >
-        {/* 🎯 Animated Headline */}
         <Typography
           variant="h3"
           sx={{
@@ -72,7 +72,6 @@ const Home = () => {
           How well do you know the world?
         </Typography>
 
-        {/* ⌨️ Typewriter Subheading in Green */}
         <Typography
           variant="h6"
           sx={{ mb: 4, fontStyle: 'italic', color: '#4CAF50' }}
@@ -92,7 +91,6 @@ const Home = () => {
           />
         </Typography>
 
-        {/* 🎮 Nickname Input + Buttons */}
         <Paper
           elevation={3}
           sx={{ p: 3, borderRadius: 3, bgcolor: 'background.paper', mb: 3 }}
@@ -101,8 +99,8 @@ const Home = () => {
             label="Enter your nickname"
             variant="outlined"
             fullWidth
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
+            value={userName}
+            onChange={(e) => setUserName(e.target.value)}
             sx={{ mb: 3 }}
           />
 

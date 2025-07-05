@@ -55,15 +55,11 @@ const Navbar = () => {
             color="inherit"
             component={RouterLink}
             to="/"
-            startIcon={
-              <AnimatedIcon>
-                <FaHome />
-              </AnimatedIcon>
-            }
+            startIcon={<AnimatedIcon><FaHome /></AnimatedIcon>}
             sx={{
               fontWeight: 700,
               mx: 1,
-              fontSize: '1.6rem', // 2x bigger than default
+              fontSize: '1.6rem',
               textTransform: 'none',
             }}
           >
@@ -74,11 +70,7 @@ const Navbar = () => {
             color="inherit"
             component={RouterLink}
             to="/quiz"
-            startIcon={
-              <AnimatedIcon>
-                <FaQuestionCircle />
-              </AnimatedIcon>
-            }
+            startIcon={<AnimatedIcon><FaQuestionCircle /></AnimatedIcon>}
             sx={{
               fontWeight: 700,
               mx: 1,
@@ -93,11 +85,7 @@ const Navbar = () => {
             color="inherit"
             component={RouterLink}
             to="/explore"
-            startIcon={
-              <AnimatedIcon>
-                <FaGlobeAsia />
-              </AnimatedIcon>
-            }
+            startIcon={<AnimatedIcon><FaGlobeAsia /></AnimatedIcon>}
             sx={{
               fontWeight: 700,
               mx: 1,
@@ -111,12 +99,8 @@ const Navbar = () => {
           <Button
             color="inherit"
             component={RouterLink}
-            to="/scoreboard"
-            startIcon={
-              <AnimatedIcon>
-                <FaTrophy />
-              </AnimatedIcon>
-            }
+            to="/capitalmasteryaward"
+            startIcon={<AnimatedIcon><FaTrophy /></AnimatedIcon>}
             sx={{
               fontWeight: 700,
               mx: 1,
@@ -124,7 +108,7 @@ const Navbar = () => {
               textTransform: 'none',
             }}
           >
-            Result
+            CapitalMasteryAward
           </Button>
         </Box>
       </Toolbar>
@@ -132,4 +116,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar
+export default Navbar;

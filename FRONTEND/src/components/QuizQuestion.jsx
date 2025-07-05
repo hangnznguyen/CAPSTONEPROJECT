@@ -5,7 +5,7 @@ import {
   Typography,
   TextField,
   Fade,
-  Stack
+  Stack,
 } from '@mui/material';
 
 export default function QuizQuestion({ question, onAnswer, showHint }) {
@@ -18,21 +18,23 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
 
   const handleSubmit = (value) => {
     let correct = false;
+
     if (type === 'multiple' || type === 'trueFalse') {
       correct = value === answer;
     } else if (type === 'fill') {
       correct = value.trim().toLowerCase() === answer.toLowerCase();
     }
+
     setInput('');
     setSubmitted(true);
     setTimeout(() => {
       onAnswer(correct);
       setSubmitted(false);
-    }, 400); // short delay for animation
+    }, 400); // delay for fade animation
   };
 
   return (
-    <Fade in timeout={400}>
+    <Fade in timeout={400} key={question.id}>
       <Box>
         <Typography variant="h5" gutterBottom fontWeight="bold">
           {prompt}
@@ -40,20 +42,25 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
 
         {image && (
           <Box mb={2}>
-            <img src={image} alt="Question visual" style={{ maxWidth: '100%', borderRadius: 8 }} />
+            <img
+              src={image}
+              alt="Question visual"
+              style={{ maxWidth: '100%', borderRadius: 8 }}
+            />
           </Box>
         )}
 
         {/* Multiple Choice */}
         {type === 'multiple' && (
           <Stack spacing={2} mt={2}>
-            {choices.map((choice, index) => (
+            {choices.map((choice, i) => (
               <Button
-                key={index}
+                key={i}
                 variant="outlined"
                 fullWidth
                 color="primary"
                 onClick={() => handleSubmit(choice)}
+                disabled={submitted}
               >
                 {choice}
               </Button>
@@ -69,7 +76,8 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
                 key={val}
                 variant="contained"
                 color="primary"
-                onClick={() => handleSubmit(val === String(answer))}
+                onClick={() => handleSubmit(val === 'True')}
+                disabled={submitted}
               >
                 {val}
               </Button>
@@ -85,14 +93,24 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               fullWidth
+              disabled={submitted}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && input.trim()) {
+                  handleSubmit(input);
+                }
+              }}
             />
-            <Button variant="contained" onClick={() => handleSubmit(input)}>
+            <Button
+              variant="contained"
+              onClick={() => handleSubmit(input)}
+              disabled={!input.trim() || submitted}
+            >
               Submit
             </Button>
           </Box>
         )}
 
-        {/* Hint (optional) */}
+        {/* Hint */}
         {showHint && hint && (
           <Typography variant="body2" mt={2} sx={{ color: 'gray' }}>
             💡 Hint: {hint}

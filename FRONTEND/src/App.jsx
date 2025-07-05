@@ -1,16 +1,14 @@
-// src/App.jsx
+// App.jsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { QuizProvider } from './context/QuizContext';
-
-// Pages
 import Home from './pages/Home';
-import Explore from './pages/Explore';
 import Quiz from './pages/Quiz';
-import Result from './pages/Result';
-
-// Global Components
+import Explore from './pages/Explore';
+import CapitalMasteryAward from './pages/CapitalMasteryAward';
+import SharedCertificate from './pages/SharedCertificate';
+import { QuizProvider } from './context/QuizContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 
 export default function App() {
   return (
@@ -19,10 +17,12 @@ export default function App() {
         <Navbar />
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/explore" element={<Explore />} />
           <Route path="/quiz" element={<Quiz />} />
-          <Route path="/result" element={<Result />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/scoreboard" element={<CapitalMasteryAward />} />
+          <Route path="/award" element={<SharedCertificate />} />
         </Routes>
+        <Footer />
       </Router>
     </QuizProvider>
   );

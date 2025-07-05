@@ -1,5 +1,3 @@
-// src/components/Timer.jsx
-
 import React, { useState, useEffect } from 'react';
 import { LinearProgress, Typography, Box } from '@mui/material';
 
@@ -7,12 +5,12 @@ export default function Timer({ duration, onTimeout }) {
   const [time, setTime] = useState(duration);
 
   useEffect(() => {
-    setTime(duration); // reset on each new question
+    setTime(duration);
     const interval = setInterval(() => {
-      setTime((t) => {
+      setTime(t => {
         if (t <= 1) {
           clearInterval(interval);
-          onTimeout(); // notify parent
+          onTimeout();
           return 0;
         }
         return t - 1;
@@ -25,8 +23,10 @@ export default function Timer({ duration, onTimeout }) {
   const progress = ((duration - time) / duration) * 100;
 
   return (
-    <Box textAlign="right">
-      <Typography variant="body1">{time}s left</Typography>
+    <Box textAlign="right" sx={{ width: '100%' }}>
+      <Typography variant="body1" sx={{ mb: 0.5 }}>
+        {time}s left
+      </Typography>
       <LinearProgress
         variant="determinate"
         value={progress}
@@ -35,9 +35,9 @@ export default function Timer({ duration, onTimeout }) {
           borderRadius: 5,
           backgroundColor: '#eee',
           '& .MuiLinearProgress-bar': {
-            backgroundColor: time <= 5 ? '#d32f2f' : '#1976d2', // red when time's low
-            transition: 'width 1s linear'
-          }
+            backgroundColor: time <= 5 ? '#d32f2f' : '#1976d2',
+            transition: 'width 1s linear',
+          },
         }}
       />
     </Box>

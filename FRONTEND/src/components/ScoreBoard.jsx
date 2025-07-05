@@ -1,4 +1,3 @@
-// src/components/ScoreBoard.jsx
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { useQuiz } from '../context/QuizContext';
@@ -8,8 +7,12 @@ export default function ScoreBoard() {
 
   return (
     <Box>
-      <Typography variant="h6">Score: {score}</Typography>
-      {streak > 1 && <Typography variant="body2">🔥 Streak: {streak}</Typography>}
+      <Typography variant="h6" component="div">Score: {score}</Typography>
+      {streak > 1 && (
+        <Typography variant="body2" color="error" component="div">
+          🔥 Streak: {streak}
+        </Typography>
+      )}
     </Box>
   );
 }
