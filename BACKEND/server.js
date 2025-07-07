@@ -1,22 +1,23 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-require('dotenv').config();
+import express from 'express';
+import dotenv from 'dotenv';
+import connectDB from './config/db.js';
+import playerRoutes from './routes/playerRoutes.js';
+import cors from 'cors';
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+dotenv.config();
 
-app.use(cors());
+const app = express();     // Create the app FIRST
+
+app.use(cors());           // Then use middleware
 app.use(express.json());
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB
+connectDB();
 
-app.get('/', (req, res) => {
-  res.send('QuizTheGlobe backend running');
-});
+// Register routes
+app.use('/api', playerRoutes);
 
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

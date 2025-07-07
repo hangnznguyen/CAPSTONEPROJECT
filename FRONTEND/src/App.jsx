@@ -19,9 +19,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/quiz" element={<Quiz />} />
           <Route path="/explore" element={<Explore />} />
-          <Route path="/scoreboard" element={<CapitalMasteryAward />} />
-          <Route path="/award" element={<SharedCertificate />} />
-        </Routes>
+          <Route path="/capitalmasteryaward" element={<CapitalMasteryAward />} />
+          </Routes>
         <Footer />
       </Router>
     </QuizProvider>

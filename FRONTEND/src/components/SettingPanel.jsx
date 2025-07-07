@@ -1,83 +1,120 @@
 import React from 'react';
 import {
   Box,
+  Typography,
+  Divider,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   Checkbox,
-  FormControlLabel,
-  Typography,
+  ListItemText,
+  OutlinedInput,
+  FormControlLabel
 } from '@mui/material';
 import { useQuiz } from '../context/QuizContext';
+
+const questionTypes = [
+  { label: 'Multiple Choice', value: 'multiple' },
+  { label: 'Fill in the Blank', value: 'fill' },
+  { label: 'True / False', value: 'trueFalse' },
+];
 
 export default function SettingPanel() {
   const { settings, setSettings } = useQuiz();
 
-  const handleNum = e => setSettings({ ...settings, numQuestions: Number(e.target.value) });
-  const handleDiff = e => setSettings({ ...settings, difficulty: e.target.value });
-  const handleType = e => {
-    setSettings({
-      ...settings,
-      types: {
-        ...settings.types,
-        [e.target.name]: e.target.checked,
-      },
+  const handleTypeChange = (event) => {
+    const selected = event.target.value;
+    const updatedTypes = {};
+
+    questionTypes.forEach(({ value }) => {
+      updatedTypes[value] = selected.includes(value);
     });
+
+    setSettings((prev) => ({
+      ...prev,
+      types: updatedTypes,
+    }));
   };
 
+  const handleDifficultyChange = (event) => {
+    const { name, checked } = event.target;
+    setSettings((prev) => ({
+      ...prev,
+      difficulties: {
+        ...prev.difficulties,
+        [name]: checked,
+      },
+    }));
+  };
+
+  const selectedTypes = Object.entries(settings.types)
+    .filter(([_, checked]) => checked)
+    .map(([key]) => key);
+
   return (
-    <Box display="flex" flexDirection="column" gap={3}>
-      <FormControl fullWidth>
-        <InputLabel id="num-questions-label">Number of Questions</InputLabel>
+    <Box>
+      <Typography variant="h6" gutterBottom>
+        Select Question Types
+      </Typography>
+      <FormControl fullWidth sx={{ mb: 3 }}>
+        <InputLabel id="types-select-label">Question Types</InputLabel>
         <Select
-          labelId="num-questions-label"
-          value={settings.numQuestions}
-          label="Number of Questions"
-          onChange={handleNum}
+          labelId="types-select-label"
+          multiple
+          value={selectedTypes}
+          onChange={handleTypeChange}
+          input={<OutlinedInput label="Question Types" />}
+          renderValue={(selected) =>
+            selected
+              .map((value) => questionTypes.find((t) => t.value === value)?.label)
+              .join(', ')
+          }
         >
-          {[5, 10, 15].map(n => (
-            <MenuItem key={n} value={n}>
-              {n}
+          {questionTypes.map((type) => (
+            <MenuItem key={type.value} value={type.value}>
+              <Checkbox checked={settings.types[type.value]} />
+              <ListItemText primary={type.label} />
             </MenuItem>
           ))}
         </Select>
       </FormControl>
 
-      <FormControl fullWidth>
-        <InputLabel id="difficulty-label">Difficulty</InputLabel>
-        <Select
-          labelId="difficulty-label"
-          value={settings.difficulty}
-          label="Difficulty"
-          onChange={handleDiff}
-        >
-          {['Easy', 'Medium', 'Hard'].map(d => (
-            <MenuItem key={d} value={d}>
-              {d}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <Divider sx={{ my: 3 }} />
 
-      <Box>
-        <Typography variant="subtitle1" mb={1}>
-          Question Types
-        </Typography>
-        {Object.keys(settings.types).map(typeKey => (
-          <FormControlLabel
-            key={typeKey}
-            control={
-              <Checkbox
-                name={typeKey}
-                checked={settings.types[typeKey]}
-                onChange={handleType}
-              />
-            }
-            label={typeKey.charAt(0).toUpperCase() + typeKey.slice(1)}
+      <Typography variant="h6" gutterBottom>
+        Select Difficulty Levels
+      </Typography>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={!!settings.difficulties?.easy}
+            onChange={handleDifficultyChange}
+            name="easy"
           />
-        ))}
-      </Box>
+        }
+        label="Easy"
+      />
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={!!settings.difficulties?.medium}
+            onChange={handleDifficultyChange}
+            name="medium"
+          />
+        }
+        label="Medium"
+      />
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={!!settings.difficulties?.hard}
+            onChange={handleDifficultyChange}
+            name="hard"
+          />
+        }
+        label="Hard"
+      />
     </Box>
   );
 }

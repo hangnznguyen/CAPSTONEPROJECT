@@ -40,7 +40,7 @@ const Home = () => {
     <Box
       sx={{
         minHeight: 'calc(100vh - 64px)',
-        backgroundImage: 'url(/assets/images/globe-bg.jpg)',
+        backgroundImage: 'url(/assets/images/globe.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         display: 'flex',

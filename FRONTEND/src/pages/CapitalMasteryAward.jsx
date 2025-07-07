@@ -1,44 +1,151 @@
-// src/pages/CapitalMasteryAward.jsx
-
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, List, ListItem, ListItemText } from '@mui/material';
+import {
+  Box,
+  Typography,
+  List,
+  ListItem,
+  ListItemText,
+  Button,
+  Collapse,
+  Paper,
+} from '@mui/material';
+import Certificate from '../components/Certificate';
+import confetti from 'canvas-confetti';
 
 export default function CapitalMasteryAward() {
   const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   useEffect(() => {
-    const savedPlayers = JSON.parse(localStorage.getItem('players')) || [];
-    // Sort players by descending score
-    const sortedPlayers = savedPlayers.sort((a, b) => b.score - a.score);
-    setPlayers(sortedPlayers);
+    async function fetchPlayers() {
+      try {
+        const res = await fetch('/api/players/top');
+        if (!res.ok) throw new Error('Failed to fetch top players');
+        const data = await res.json();
+        setPlayers(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPlayers();
   }, []);
 
+  if (loading) {
+    return (
+      <Box sx={{ px: 3, py: 5 }}>
+        <Typography variant="h6" textAlign="center">Loading top players...</Typography>
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ px: 3, py: 5 }}>
+        <Typography variant="h6" textAlign="center" color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ px: 3, py: 5 }}>
-      <Typography variant="h3" textAlign="center" fontWeight="bold" color="primary">
-        🏆 Capital Mastery Awards
-      </Typography>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        backgroundImage: 'url("/assets/images/Achievement.jpg")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        p: 2,
+      }}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          p: 4,
+          bgcolor: 'rgba(255,255,255,0.9)',
+          borderRadius: 4,
+          maxWidth: 500,
+          width: '100%',
+          maxHeight: '90vh',
+          overflowY: 'auto',
+          textAlign: 'center',
+        }}
+      >
+        {/* 🥇 Top 10 Heading */}
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          gutterBottom
+          sx={{
+            color: 'gold',
+            textShadow: '0 0 10px #ffd700',
+            fontFamily: "'Playfair Display', serif",
+            mb: 4,
+          }}
+        >
+          🥇 TOP 10 PLAYERS
+        </Typography>
 
-      <Typography variant="h5" mt={4} mb={2}>
-        🎉 Players Who Have Played:
-      </Typography>
+        {/* Player List */}
+        <List>
+          {players.map((player, index) => (
+            <Box key={player._id || index} sx={{ mb: 3 }}>
+              <ListItem
+                sx={{
+                  borderRadius: 2,
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  mb: 1,
+                }}
+                secondaryAction={
+                  <Button
+                    variant="outlined"
+                    onClick={() => {
+                      const isSame = selectedPlayer?._id === player._id;
+                      setSelectedPlayer(isSame ? null : player);
 
-      <List>
-        {players.length === 0 && (
-          <Typography variant="body1" textAlign="center" color="text.secondary">
-            No players have played yet. Be the first!
-          </Typography>
-        )}
+                      if (!isSame) {
+                        confetti({
+                          particleCount: 100,
+                          spread: 70,
+                          origin: { y: 0.4 },
+                        });
+                      }
+                    }}
+                  >
+                    Certificate
+                  </Button>
+                }
+              >
+                <ListItemText
+                  primary={
+                    <Typography variant="h6" fontWeight="bold" fontSize="1.3rem">
+                      {index + 1}. {player.name}
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="body1" fontSize="1.1rem" color="text.secondary">
+                      Score: {player.score}
+                    </Typography>
+                  }
+                />
+              </ListItem>
 
-        {players.map((player, index) => (
-          <ListItem key={index}>
-            <ListItemText
-              primary={`${index + 1}. ${player.name}`}
-              secondary={`Score: ${player.score}`}
-            />
-          </ListItem>
-        ))}
-      </List>
+              <Collapse in={selectedPlayer?._id === player._id} timeout="auto" unmountOnExit>
+                <Box mt={2}>
+                  <Certificate name={player.name} score={player.score} />
+                </Box>
+              </Collapse>
+            </Box>
+          ))}
+        </List>
+      </Paper>
     </Box>
   );
 }

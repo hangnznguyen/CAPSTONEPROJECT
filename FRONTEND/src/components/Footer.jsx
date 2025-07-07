@@ -26,8 +26,8 @@ const Footer = () => {
         <Link href="/explore" color="inherit" underline="hover" sx={{ mx: 1 }}>
           Explore
         </Link>
-        <Link href="/scoreboard" color="inherit" underline="hover" sx={{ mx: 1 }}>
-          Scoreboard
+        <Link href="/CapitalMasteryAward" color="inherit" underline="hover" sx={{ mx: 1 }}>
+          Capital Mastery Award
         </Link>
       </Box>
     </Box>

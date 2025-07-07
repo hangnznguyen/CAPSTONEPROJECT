@@ -43,7 +43,7 @@ export default function Explore() {
   const [searchValue, setSearchValue] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
   const [sortBy, setSortBy] = useState('');
-  const [loading, setLoading] = useState(true);  // <-- declare loading here
+  const [loading, setLoading] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [openModal, setOpenModal] = useState(false);
 
@@ -51,7 +51,6 @@ export default function Explore() {
   const location = useLocation();
   const userName = location.state?.userName || '';
 
-  // Fetch countries data
   useEffect(() => {
     (async () => {
       try {
@@ -70,7 +69,6 @@ export default function Explore() {
     })();
   }, []);
 
-  // Filtering & sorting logic
   const applyFilters = (search, region, sortKey) => {
     let list = [...countries];
     if (region) list = list.filter((c) => c.region === region);
@@ -84,7 +82,6 @@ export default function Explore() {
     setFiltered(list);
   };
 
-  // Handlers for filter/sort inputs
   const handleSearchInput = (_, value) => {
     setSearchValue(value);
     applyFilters(value, regionFilter, sortBy);
@@ -133,7 +130,6 @@ export default function Explore() {
           </IconButton>
         </Box>
 
-        {/* Animated Welcome Message */}
         {userName && (
           <Grow in timeout={1500}>
             <Typography
@@ -159,7 +155,6 @@ export default function Explore() {
           </Box>
         ) : (
           <>
-            {/* Search box */}
             <Autocomplete
               freeSolo
               disableClearable
@@ -194,7 +189,6 @@ export default function Explore() {
               )}
             />
 
-            {/* Filters */}
             <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', mb: 4 }}>
               <FormControl sx={{ minWidth: 200 }}>
                 <InputLabel>Sort By</InputLabel>
@@ -222,9 +216,24 @@ export default function Explore() {
             </Box>
 
             {/* Country cards */}
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+              justifyContent="space-between"
+            >
               {filtered.map((c) => (
-                <Grid item xs={12} sm={6} md={4} lg={3} key={c.alpha2Code}>
+                <Grid
+                  item
+                  key={c.alpha2Code}
+                  xs={12}
+                  sm={6}
+                  md={4}
+                  lg={3}
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
+                >
                   <Card
                     onClick={() => openCountry(c)}
                     sx={{
@@ -233,6 +242,8 @@ export default function Explore() {
                       transition: 'transform .3s',
                       '&:hover': { transform: 'scale(1.05)', boxShadow: 4 },
                       borderRadius: 3,
+                      width: '100%',
+                      maxWidth: 300,
                     }}
                   >
                     <CardMedia
@@ -249,12 +260,10 @@ export default function Explore() {
                         <strong>Capital:</strong> {c.capital || 'N/A'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Population:</strong>{' '}
-                        {c.population?.toLocaleString() || 'N/A'}
+                        <strong>Population:</strong> {c.population?.toLocaleString() || 'N/A'}
                       </Typography>
                       <Typography variant="body2">
-                        <strong>Currency:</strong>{' '}
-                        {c.currencies?.[0]?.name || 'N/A'}
+                        <strong>Currency:</strong> {c.currencies?.[0]?.name || 'N/A'}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -262,7 +271,6 @@ export default function Explore() {
               ))}
             </Grid>
 
-            {/* Modal for selected country */}
             <Dialog open={openModal} onClose={closeCountry}>
               <DialogTitle>
                 {selectedCountry?.name} {getFlagEmoji(selectedCountry?.alpha2Code)}
@@ -273,11 +281,9 @@ export default function Explore() {
                   <br />
                   <strong>Region:</strong> {selectedCountry?.region || 'N/A'}
                   <br />
-                  <strong>Population:</strong>{' '}
-                  {selectedCountry?.population?.toLocaleString() || 'N/A'}
+                  <strong>Population:</strong> {selectedCountry?.population?.toLocaleString() || 'N/A'}
                   <br />
-                  <strong>Currency:</strong>{' '}
-                  {selectedCountry?.currencies?.[0]?.name || 'N/A'}
+                  <strong>Currency:</strong> {selectedCountry?.currencies?.[0]?.name || 'N/A'}
                 </DialogContentText>
               </DialogContent>
               <DialogActions>
