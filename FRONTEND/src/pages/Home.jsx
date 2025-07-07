@@ -28,7 +28,6 @@ const Home = () => {
       alert('Please enter your nickname');
       return;
     }
-    // no need to pass nickname in navigate state
     navigate('/quiz');
   };
 
@@ -45,10 +44,46 @@ const Home = () => {
         backgroundPosition: 'center',
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         p: 3,
+        flexDirection: 'column',
       }}
     >
+      {/* Welcome Text Centered with Justify and adjusted font sizes */}
+      <Box
+        sx={{
+          maxWidth: 600,
+          mb: 8,
+          color: '#002B5B',
+          fontFamily: "'Dancing Script', cursive",
+          alignSelf: 'center',
+          textAlign: 'justify',
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{
+            mb: 2,
+            fontSize: '2rem', // smaller so it stays in one line
+            whiteSpace: 'nowrap', // prevent wrapping just in case
+          }}
+          noWrap
+        >
+          Welcome to Capital Quiz Game!
+        </Typography>
+        <Typography
+          variant="body1"
+          sx={{
+            fontFamily: '"Roboto", sans-serif',
+            fontSize: '1.25rem', // slightly bigger than before
+            lineHeight: 1.6,
+          }}
+        >
+          Test your knowledge of world capitals in a fun and challenging quiz. See how many you can get right and learn as you play!
+        </Typography>
+      </Box>
+
+      {/* Main Container */}
       <Container
         maxWidth="sm"
         sx={{

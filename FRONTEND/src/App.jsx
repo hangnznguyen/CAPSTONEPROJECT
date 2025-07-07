@@ -5,7 +5,6 @@ import Home from './pages/Home';
 import Quiz from './pages/Quiz';
 import Explore from './pages/Explore';
 import CapitalMasteryAward from './pages/CapitalMasteryAward';
-import SharedCertificate from './pages/SharedCertificate';
 import { QuizProvider } from './context/QuizContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
