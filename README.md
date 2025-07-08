@@ -27,7 +27,7 @@ Quiz The Globe is an interactive React-based quiz application designed to challe
 
 - Fallback questions: Offline fallback support if API fails.
 
-  ## Getting started
+## Getting started
 
 ### Prerequisites
 
