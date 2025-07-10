@@ -1,7 +1,7 @@
 // src/pages/Quiz.jsx
 
 import React, { useEffect, useCallback, useState } from 'react';
-import { Box, Typography, Button, Grid } from '@mui/material';
+import { Box, Typography, Button, Grid, CircularProgress } from '@mui/material';
 import StopIcon from '@mui/icons-material/Stop';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { styled, keyframes } from '@mui/material/styles';
@@ -70,6 +70,7 @@ export default function Quiz() {
   } = useQuiz();
 
   const [quizFinished, setQuizFinished] = useState(false);
+  const [loadingNextQuiz, setLoadingNextQuiz] = useState(false);
 
   const savePlayerScore = async (name, score) => {
     try {
@@ -88,44 +89,45 @@ export default function Quiz() {
 
   useEffect(() => {
     if (!quizStarted) return;
-
-    const fetchQuestions = async () => {
-      const typesStr = Object.keys(settings.types ?? {})
-        .filter((key) => settings.types[key])
-        .join(',');
-
-      const difficulties = Object.keys(settings.difficulties ?? {}).filter(
-        (key) => settings.difficulties[key]
-      );
-      const difficultyStr = difficulties.join(',');
-
-      if (!typesStr || !difficultyStr) {
-        setQuestions([]);
-        return;
-      }
-
-      try {
-        const res = await fetch(
-          `http://localhost:8080/api/quiz?amount=${settings.numQuestions}&difficulty=${difficultyStr}&types=${typesStr}`
-        );
-        const data = await res.json();
-        const num = settings.numQuestions;
-        setQuestions(Array.isArray(data) ? data.slice(0, num) : []);
-      } catch {
-        const num = settings.numQuestions;
-        const filtered = fallbackQuestions.filter(
-          (q) => difficulties.includes(q.difficulty) && settings.types[q.type]
-        );
-        setQuestions(filtered.slice(0, num));
-      }
-    };
-
     fetchQuestions();
-  }, [quizStarted, settings, setQuestions]);
+  }, [quizStarted, settings]);
 
   useEffect(() => {
     return () => SoundEffect.stop();
   }, []);
+
+  const fetchQuestions = async () => {
+    const typesStr = Object.keys(settings.types ?? {})
+      .filter((key) => settings.types[key])
+      .join(',');
+
+    const difficulties = Object.keys(settings.difficulties ?? {}).filter(
+      (key) => settings.difficulties[key]
+    );
+    const difficultyStr = difficulties.join(',');
+
+    if (!typesStr || !difficultyStr) {
+      setQuestions([]);
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/quiz?amount=${settings.numQuestions}&difficulty=${difficultyStr}&types=${typesStr}&t=${Date.now()}`
+      );
+      const data = await res.json();
+      const num = settings.numQuestions;
+      setQuestions(Array.isArray(data) ? data.slice(0, num) : []);
+    } catch {
+      const num = settings.numQuestions;
+      const filtered = fallbackQuestions
+        .filter(
+          (q) => difficulties.includes(q.difficulty) && settings.types[q.type]
+        )
+        .sort(() => 0.5 - Math.random());
+      setQuestions(filtered.slice(0, num));
+    }
+  };
 
   const handleStart = () => {
     setQuizStarted(true);
@@ -150,6 +152,22 @@ export default function Quiz() {
     setScore(0);
     setStreak(0);
     setQuizFinished(false);
+  };
+
+  const handleNextQuiz = async () => {
+    SoundEffect.stop(); // ✅ Stop music when starting new quiz
+    setLoadingNextQuiz(true);
+    setQuizFinished(false);
+    setCurrentIndex(0);
+    setScore(0);
+    setStreak(0);
+
+    try {
+      await fetchQuestions();
+      setQuizStarted(true);
+    } finally {
+      setLoadingNextQuiz(false);
+    }
   };
 
   const handleAnswer = useCallback(
@@ -187,6 +205,21 @@ export default function Quiz() {
     if (score >= questions.length * 0.5) return '👍 Good effort! Keep practicing!';
     return '💪 Keep going! Every expert was once a beginner!';
   };
+
+  if (loadingNextQuiz) {
+    return (
+      <PageWrapper>
+        <CenterContent>
+          <Container sx={{ textAlign: 'center' }}>
+            <Typography variant="h5" gutterBottom>
+              Loading your next quiz...
+            </Typography>
+            <CircularProgress color="primary" />
+          </Container>
+        </CenterContent>
+      </PageWrapper>
+    );
+  }
 
   if (!quizStarted && !quizFinished) {
     return (
@@ -229,8 +262,11 @@ export default function Quiz() {
               {getMotivation()}
             </Typography>
             <Box display="flex" justifyContent="center" gap={2}>
-              <Button startIcon={<RestartAltIcon />} variant="contained" onClick={handleStart}>
-                Restart Quiz
+              <Button variant="outlined" onClick={handleRestart}>
+                Restart Same Quiz
+              </Button>
+              <Button variant="contained" color="secondary" onClick={handleNextQuiz}>
+                Next Quiz
               </Button>
               <Button
                 startIcon={<StopIcon />}
