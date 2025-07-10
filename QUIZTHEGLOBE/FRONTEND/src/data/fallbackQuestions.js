@@ -520,7 +520,7 @@ const fallbackQuestions = [
     choices: ['Beijing', 'Shanghai', 'Guangzhou', 'Wuhan'],
     answer: 'Beijing',
     hint: 'The Forbidden City is located here.',
-    image: 'https://upload.wikimedia.org/wikipedia/commons/0/0d/Flag_of_China.svg',
+    image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Flag_of_the_People%27s_Republic_of_China.svg/1280px-Flag_of_the_People%27s_Republic_of_China.svg.png',
   },
   {
     id: 66,
