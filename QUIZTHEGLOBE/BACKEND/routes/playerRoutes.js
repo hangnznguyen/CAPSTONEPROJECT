@@ -1,10 +1,17 @@
-// routes/playerRoutes.js
+
 import express from 'express';
-import { savePlayer, getTopPlayers } from '../controllers/playerController.js';
+import {
+  savePlayer,
+  getTopPlayers,
+  updatePlayer,
+  deletePlayer,
+} from '../controllers/playerController.js';
 
 const router = express.Router();
 
-router.post('/players', savePlayer);
-router.get('/players/top', getTopPlayers);
+router.post('/players', savePlayer);// Save new player score
+router.get('/players/top', getTopPlayers); // Get top 10 players
+router.put('/players/:id', updatePlayer);     // ✅ Update player
+router.delete('/players/:id', deletePlayer);  // ✅ Delete player
 
 export default router;

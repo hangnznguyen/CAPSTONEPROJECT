@@ -52,19 +52,35 @@ const Certificate = ({ name = '', score = 0 }) => {
           borderRadius: 4,
           textAlign: 'center',
           position: 'relative',
-          background: 'linear-gradient(135deg, #d1c4e9, #b39ddb)',
+          zIndex: 1,
+          backgroundImage: `
+            url('/assets/images/watercolor-light-blue.png'),
+            linear-gradient(135deg, #c7d9f1 0%, #a8c3e8 100%)
+          `,
+          backgroundRepeat: 'no-repeat',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
           boxShadow: '0 12px 30px rgba(101, 31, 255, 0.2)',
           border: '12px solid #5e35b1',
           fontFamily: "'Cormorant Garamond', serif",
           color: '#311b92',
           userSelect: 'none',
           aspectRatio: '11 / 8.5', // landscape
-          '@media print': {
-            boxShadow: 'none',
-            border: 'none',
-            maxWidth: '100%',
-            aspectRatio: 'auto',
-            pageBreakAfter: 'always',
+
+          '&::before': {
+            content: '"QuizTheGlobe Achievement"',
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%) rotate(-15deg)',
+            fontSize: '6rem',
+            fontWeight: '900',
+            color: 'rgba(100, 149, 237, 0.1)', // light transparent blue
+            userSelect: 'none',
+            pointerEvents: 'none',
+            whiteSpace: 'nowrap',
+            fontFamily: "'Playfair Display', serif",
+            zIndex: 0,
           },
         }}
       >

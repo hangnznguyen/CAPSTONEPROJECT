@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -8,29 +8,75 @@ import {
   Stack,
 } from '@mui/material';
 
-export default function QuizQuestion({ question, onAnswer, showHint }) {
+export default function QuizQuestion({
+  question,
+  onAnswer,
+  showHint,
+  showAnswer,
+}) {
   const [input, setInput] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [selectedChoice, setSelectedChoice] = useState(null);
+
+  useEffect(() => {
+    // Reset states on new question
+    setInput('');
+    setSubmitted(false);
+    setSelectedChoice(null);
+  }, [question]);
 
   if (!question) return null;
 
   const { type, prompt, choices, answer, image, hint } = question;
 
   const handleSubmit = (value) => {
+    if (submitted || showAnswer) return; // Prevent submitting while showing answer
+
     let correct = false;
 
     if (type === 'multiple' || type === 'trueFalse') {
-      correct = value === answer;
+      correct = value === answer || value === (answer ? 'True' : 'False');
     } else if (type === 'fill') {
       correct = value.trim().toLowerCase() === answer.toLowerCase();
     }
 
     setInput('');
     setSubmitted(true);
+    setSelectedChoice(value);
+
+    // Inform parent of answer correctness
     setTimeout(() => {
       onAnswer(correct);
-      setSubmitted(false);
-    }, 400); // delay for fade animation
+    }, 400);
+  };
+
+  const isCorrectChoice = (choice) => {
+    if (!showAnswer) return false;
+    if (type === 'trueFalse') return choice === (answer ? 'True' : 'False');
+    return choice === answer;
+  };
+
+  const isWrongChoice = (choice) => {
+    // Show wrong only if user selected and it's not correct
+    return showAnswer && selectedChoice === choice && !isCorrectChoice(choice);
+  };
+
+  const getButtonStyle = (choice) => {
+    if (isCorrectChoice(choice)) {
+      return {
+        borderColor: 'green',
+        backgroundColor: '#e6f4ea',
+        fontWeight: 'bold',
+      };
+    }
+    if (isWrongChoice(choice)) {
+      return {
+        borderColor: 'red',
+        backgroundColor: '#f9d6d5',
+        fontWeight: 'bold',
+      };
+    }
+    return {};
   };
 
   return (
@@ -60,7 +106,8 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
                 fullWidth
                 color="primary"
                 onClick={() => handleSubmit(choice)}
-                disabled={submitted}
+                disabled={submitted || showAnswer}
+                sx={getButtonStyle(choice)}
               >
                 {choice}
               </Button>
@@ -77,7 +124,8 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
                 variant="contained"
                 color="primary"
                 onClick={() => handleSubmit(val === 'True')}
-                disabled={submitted}
+                disabled={submitted || showAnswer}
+                sx={getButtonStyle(val)}
               >
                 {val}
               </Button>
@@ -93,9 +141,9 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               fullWidth
-              disabled={submitted}
+              disabled={submitted || showAnswer}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && input.trim()) {
+                if (e.key === 'Enter' && input.trim() && !submitted && !showAnswer) {
                   handleSubmit(input);
                 }
               }}
@@ -103,7 +151,7 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
             <Button
               variant="contained"
               onClick={() => handleSubmit(input)}
-              disabled={!input.trim() || submitted}
+              disabled={!input.trim() || submitted || showAnswer}
             >
               Submit
             </Button>
@@ -115,6 +163,16 @@ export default function QuizQuestion({ question, onAnswer, showHint }) {
           <Typography variant="body2" mt={2} sx={{ color: 'gray' }}>
             💡 Hint: {hint}
           </Typography>
+        )}
+
+        {/* Show Correct Answer */}
+        {showAnswer && (
+          <Box mt={2}>
+            <Typography color="green" fontWeight="bold">
+              ✅ Correct Answer:{' '}
+              {type === 'trueFalse' ? (answer ? 'True' : 'False') : answer}
+            </Typography>
+          </Box>
         )}
       </Box>
     </Fade>

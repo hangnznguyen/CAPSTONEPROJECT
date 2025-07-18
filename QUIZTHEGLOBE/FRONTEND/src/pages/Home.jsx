@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { keyframes } from '@mui/system';
 import { Typewriter } from 'react-simple-typewriter';
-import { useQuiz } from '../context/QuizContext'; // import your context
+import { useQuiz } from '../context/QuizContext'; // import the context
 
 const headlineAnimation = keyframes`
   0% { transform: translateY(-20px); opacity: 0 }
@@ -49,7 +49,7 @@ const Home = () => {
         flexDirection: 'column',
       }}
     >
-      {/* Welcome Text Centered with Justify and adjusted font sizes */}
+      
       <Box
         sx={{
           maxWidth: 600,
@@ -64,8 +64,8 @@ const Home = () => {
           variant="h4"
           sx={{
             mb: 2,
-            fontSize: '2rem', // smaller so it stays in one line
-            whiteSpace: 'nowrap', // prevent wrapping just in case
+            fontSize: '2rem', 
+            whiteSpace: 'nowrap', 
           }}
           noWrap
         >
@@ -75,7 +75,7 @@ const Home = () => {
           variant="body1"
           sx={{
             fontFamily: '"Roboto", sans-serif',
-            fontSize: '1.25rem', // slightly bigger than before
+            fontSize: '1.25rem', 
             lineHeight: 1.6,
           }}
         >

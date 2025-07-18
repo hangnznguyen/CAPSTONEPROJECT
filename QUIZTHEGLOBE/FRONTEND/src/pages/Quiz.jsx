@@ -1,19 +1,34 @@
-// src/pages/Quiz.jsx
-
-import React, { useEffect, useCallback, useState } from 'react';
-import { Box, Typography, Button, Grid, CircularProgress } from '@mui/material';
+import React, { useEffect, useCallback, useState, useMemo } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 import StopIcon from '@mui/icons-material/Stop';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { styled, keyframes } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
+
 import { useQuiz } from '../context/QuizContext';
 import SettingPanel from '../components/SettingPanel';
 import QuizQuestion from '../components/QuizQuestion';
 import ScoreBoard from '../components/ScoreBoard';
 import Timer from '../components/Timer';
 import SoundEffect from '../components/SoundEffect';
-import fallbackQuestions from '../data/fallbackQuestions.js';
+import fallbackQuestions from '../data/fallbackQuestions';
 
-const PageWrapper = styled(Box)(({ theme }) => ({
+const bounce = keyframes`
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+`;
+
+const PageWrapper = styled(Box)({
   minHeight: '100vh',
   display: 'flex',
   flexDirection: 'column',
@@ -21,7 +36,7 @@ const PageWrapper = styled(Box)(({ theme }) => ({
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
-}));
+});
 
 const CenterContent = styled(Box)({
   flex: 1,
@@ -38,12 +53,8 @@ const Container = styled(Box)({
   borderRadius: '16px',
   boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
   marginRight: '2rem',
+  backgroundColor: 'rgba(255, 255, 255, 0.95)',
 });
-
-const bounce = keyframes`
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
-`;
 
 const AnimatedHeading = styled(Typography)({
   animation: `${bounce} 1.6s ease-in-out infinite`,
@@ -54,6 +65,8 @@ const AnimatedHeading = styled(Typography)({
 });
 
 export default function Quiz() {
+  const navigate = useNavigate();
+
   const {
     userName,
     settings,
@@ -71,6 +84,17 @@ export default function Quiz() {
 
   const [quizFinished, setQuizFinished] = useState(false);
   const [loadingNextQuiz, setLoadingNextQuiz] = useState(false);
+  const [openSignInDialog, setOpenSignInDialog] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  useEffect(() => {
+    if (!quizStarted) return;
+    fetchAndSetQuestions();
+  }, [quizStarted, settings]);
+
+  useEffect(() => {
+    return () => SoundEffect.stop();
+  }, []);
 
   const savePlayerScore = async (name, score) => {
     try {
@@ -87,21 +111,14 @@ export default function Quiz() {
     }
   };
 
-  useEffect(() => {
-    if (!quizStarted) return;
-    fetchQuestions();
-  }, [quizStarted, settings]);
+  const shuffleArray = (arr) => [...arr].sort(() => 0.5 - Math.random());
 
-  useEffect(() => {
-    return () => SoundEffect.stop();
-  }, []);
-
-  const fetchQuestions = async () => {
-    const typesStr = Object.keys(settings.types ?? {})
+  const fetchAndSetQuestions = async () => {
+    const typesStr = Object.keys(settings.types || {})
       .filter((key) => settings.types[key])
       .join(',');
 
-    const difficulties = Object.keys(settings.difficulties ?? {}).filter(
+    const difficulties = Object.keys(settings.difficulties || {}).filter(
       (key) => settings.difficulties[key]
     );
     const difficultyStr = difficulties.join(',');
@@ -116,25 +133,31 @@ export default function Quiz() {
         `http://localhost:8080/api/quiz?amount=${settings.numQuestions}&difficulty=${difficultyStr}&types=${typesStr}&t=${Date.now()}`
       );
       const data = await res.json();
-      const num = settings.numQuestions;
-      setQuestions(Array.isArray(data) ? data.slice(0, num) : []);
+      const shuffled = shuffleArray(data).slice(0, settings.numQuestions);
+      setQuestions(shuffled);
     } catch {
-      const num = settings.numQuestions;
-      const filtered = fallbackQuestions
-        .filter(
-          (q) => difficulties.includes(q.difficulty) && settings.types[q.type]
-        )
-        .sort(() => 0.5 - Math.random());
-      setQuestions(filtered.slice(0, num));
+      const filtered = fallbackQuestions.filter(
+        (q) => difficulties.includes(q.difficulty) && settings.types[q.type]
+      );
+      setQuestions(shuffleArray(filtered).slice(0, settings.numQuestions));
     }
   };
 
   const handleStart = () => {
+    if (!userName || userName.trim() === '') {
+      setOpenSignInDialog(true);
+      return;
+    }
     setQuizStarted(true);
     setQuizFinished(false);
     setCurrentIndex(0);
     setScore(0);
     setStreak(0);
+  };
+
+  const handleGoHome = () => {
+    setOpenSignInDialog(false);
+    navigate('/');
   };
 
   const handleStop = () => {
@@ -155,15 +178,14 @@ export default function Quiz() {
   };
 
   const handleNextQuiz = async () => {
-    SoundEffect.stop(); // ✅ Stop music when starting new quiz
+    SoundEffect.stop();
     setLoadingNextQuiz(true);
     setQuizFinished(false);
     setCurrentIndex(0);
-    setScore(0);
     setStreak(0);
-
+    setQuestions([]);
     try {
-      await fetchQuestions();
+      await fetchAndSetQuestions();
       setQuizStarted(true);
     } finally {
       setLoadingNextQuiz(false);
@@ -171,33 +193,78 @@ export default function Quiz() {
   };
 
   const handleAnswer = useCallback(
-    async (correct) => {
+    async (correct, isTimeout = false) => {
+      if (isTimeout) {
+        setShowAnswer(true);
+        SoundEffect.play('incorrect');
+
+        setTimeout(async () => {
+          setShowAnswer(false);
+
+          const isLast = currentIndex >= questions.length - 1;
+          if (!isLast) {
+            setCurrentIndex((prev) => prev + 1);
+          } else {
+            SoundEffect.play('complete');
+            await savePlayerScore(userName || 'Anonymous', score);
+            setQuizFinished(true);
+            setQuizStarted(false);
+          }
+        }, 2000);
+
+        return;
+      }
+
       if (correct) {
         setScore((prev) => prev + 1);
         setStreak((prev) => prev + 1);
         SoundEffect.play('correct');
         if (streak + 1 >= 3) SoundEffect.play('streak');
       } else {
+        setShowAnswer(true); // Show correct answer on wrong
         setStreak(0);
         SoundEffect.play('incorrect');
       }
 
       const isLast = currentIndex >= questions.length - 1;
 
-      if (!isLast) {
-        setCurrentIndex((prev) => prev + 1);
-      } else {
-        SoundEffect.play('complete');
-        await savePlayerScore(userName || 'Anonymous', correct ? score + 1 : score);
-        setQuizFinished(true);
-        setQuizStarted(false);
-      }
+      setTimeout(async () => {
+        setShowAnswer(false);
+        if (!isLast) {
+          setCurrentIndex((prev) => prev + 1);
+        } else {
+          SoundEffect.play('complete');
+          await savePlayerScore(userName || 'Anonymous', correct ? score + 1 : score);
+          setQuizFinished(true);
+          setQuizStarted(false);
+        }
+      }, 2000);
     },
     [currentIndex, questions.length, streak, score, userName]
   );
 
-  const current = questions[currentIndex] || {};
-  const progress = questions.length ? (currentIndex + 1) / questions.length : 0;
+  const handleSkip = async () => {
+    SoundEffect.stop();
+
+    setShowAnswer(true); // Show correct answer first
+
+    setTimeout(async () => {
+      setShowAnswer(false);
+
+      const isLast = currentIndex >= questions.length - 1;
+
+      if (!isLast) {
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        setQuizFinished(true);
+        setQuizStarted(false);
+        await savePlayerScore(userName || 'Anonymous', score);
+      }
+    }, 2000);
+  };
+
+  const current = useMemo(() => questions[currentIndex] || {}, [questions, currentIndex]);
+  const progress = useMemo(() => (questions.length ? (currentIndex + 1) / questions.length : 0), [questions, currentIndex]);
 
   const getMotivation = () => {
     if (score === questions.length) return "🎉 Perfect score! You're a true Capital Master!";
@@ -227,20 +294,39 @@ export default function Quiz() {
         <CenterContent>
           <Container>
             <Typography variant="h3" fontWeight="bold" color="primary.main" gutterBottom>
-              Welcome, {userName}!
+              Welcome, {userName || 'Guest'}!
             </Typography>
-
             <AnimatedHeading variant="h4" color="secondary">
               🎯 Set Your Challenge Level
             </AnimatedHeading>
-
             <Box mt={3} mb={4}>
               <SettingPanel />
             </Box>
-
-            <Button variant="contained" color="primary" onClick={handleStart}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleStart}
+              disabled={!userName || userName.trim() === ''}
+            >
               Start Quiz
             </Button>
+
+            <Dialog open={openSignInDialog} onClose={() => setOpenSignInDialog(false)}>
+              <DialogTitle>Nickname Required</DialogTitle>
+              <DialogContent>
+                <Typography>
+                  Please sign in by entering your nickname on the Home page before starting the quiz.
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleGoHome} color="primary">
+                  Go to Home
+                </Button>
+                <Button onClick={() => setOpenSignInDialog(false)} color="secondary" autoFocus>
+                  Cancel
+                </Button>
+              </DialogActions>
+            </Dialog>
           </Container>
         </CenterContent>
       </PageWrapper>
@@ -300,7 +386,7 @@ export default function Quiz() {
               </Typography>
             </Grid>
             <Grid item xs={4}>
-              <Timer duration={30} onTimeout={() => handleAnswer(false)} progress={progress} />
+              <Timer duration={30} onTimeout={() => handleAnswer(false, true)} progress={progress} />
             </Grid>
           </Grid>
 
@@ -311,6 +397,7 @@ export default function Quiz() {
               onAnswer={handleAnswer}
               showHint
               options={settings.types}
+              showAnswer={showAnswer}
             />
           </Box>
 
@@ -320,6 +407,9 @@ export default function Quiz() {
             </Button>
             <Button startIcon={<RestartAltIcon />} variant="outlined" onClick={handleRestart}>
               Restart
+            </Button>
+            <Button variant="outlined" onClick={handleSkip}>
+              Next
             </Button>
           </Box>
         </Container>
