@@ -85,6 +85,7 @@ export default function Quiz() {
   const [quizFinished, setQuizFinished] = useState(false);
   const [loadingNextQuiz, setLoadingNextQuiz] = useState(false);
   const [openSignInDialog, setOpenSignInDialog] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
 
   useEffect(() => {
     if (!quizStarted) return;
@@ -181,10 +182,8 @@ export default function Quiz() {
     setLoadingNextQuiz(true);
     setQuizFinished(false);
     setCurrentIndex(0);
-   
     setStreak(0);
     setQuestions([]);
-
     try {
       await fetchAndSetQuestions();
       setQuizStarted(true);
@@ -194,42 +193,74 @@ export default function Quiz() {
   };
 
   const handleAnswer = useCallback(
-    async (correct) => {
+    async (correct, isTimeout = false) => {
+      if (isTimeout) {
+        setShowAnswer(true);
+        SoundEffect.play('incorrect');
+
+        setTimeout(async () => {
+          setShowAnswer(false);
+
+          const isLast = currentIndex >= questions.length - 1;
+          if (!isLast) {
+            setCurrentIndex((prev) => prev + 1);
+          } else {
+            SoundEffect.play('complete');
+            await savePlayerScore(userName || 'Anonymous', score);
+            setQuizFinished(true);
+            setQuizStarted(false);
+          }
+        }, 2000);
+
+        return;
+      }
+
       if (correct) {
         setScore((prev) => prev + 1);
         setStreak((prev) => prev + 1);
         SoundEffect.play('correct');
         if (streak + 1 >= 3) SoundEffect.play('streak');
       } else {
+        setShowAnswer(true); // Show correct answer on wrong
         setStreak(0);
         SoundEffect.play('incorrect');
       }
 
       const isLast = currentIndex >= questions.length - 1;
 
-      if (!isLast) {
-        setCurrentIndex((prev) => prev + 1);
-      } else {
-        SoundEffect.play('complete');
-        await savePlayerScore(userName || 'Anonymous', correct ? score + 1 : score);
-        setQuizFinished(true);
-        setQuizStarted(false);
-      }
+      setTimeout(async () => {
+        setShowAnswer(false);
+        if (!isLast) {
+          setCurrentIndex((prev) => prev + 1);
+        } else {
+          SoundEffect.play('complete');
+          await savePlayerScore(userName || 'Anonymous', correct ? score + 1 : score);
+          setQuizFinished(true);
+          setQuizStarted(false);
+        }
+      }, 2000);
     },
     [currentIndex, questions.length, streak, score, userName]
   );
 
-  
   const handleSkip = async () => {
     SoundEffect.stop();
-    const isLast = currentIndex >= questions.length - 1;
-    if (!isLast) {
-      setCurrentIndex((prev) => prev + 1);
-    } else {
-      setQuizFinished(true);
-      setQuizStarted(false);
-      await savePlayerScore(userName || 'Anonymous', score);
-    }
+
+    setShowAnswer(true); // Show correct answer first
+
+    setTimeout(async () => {
+      setShowAnswer(false);
+
+      const isLast = currentIndex >= questions.length - 1;
+
+      if (!isLast) {
+        setCurrentIndex((prev) => prev + 1);
+      } else {
+        setQuizFinished(true);
+        setQuizStarted(false);
+        await savePlayerScore(userName || 'Anonymous', score);
+      }
+    }, 2000);
   };
 
   const current = useMemo(() => questions[currentIndex] || {}, [questions, currentIndex]);
@@ -242,7 +273,6 @@ export default function Quiz() {
     return '💪 Keep going! Every expert was once a beginner!';
   };
 
-  // 🔄 Loading state
   if (loadingNextQuiz) {
     return (
       <PageWrapper>
@@ -258,7 +288,6 @@ export default function Quiz() {
     );
   }
 
-  // 🚀 Quiz Not Started
   if (!quizStarted && !quizFinished) {
     return (
       <PageWrapper>
@@ -282,7 +311,6 @@ export default function Quiz() {
               Start Quiz
             </Button>
 
-            {/* Dialog when no nickname */}
             <Dialog open={openSignInDialog} onClose={() => setOpenSignInDialog(false)}>
               <DialogTitle>Nickname Required</DialogTitle>
               <DialogContent>
@@ -305,7 +333,6 @@ export default function Quiz() {
     );
   }
 
-  // ✅ Quiz Finished
   if (quizFinished) {
     return (
       <PageWrapper>
@@ -342,7 +369,6 @@ export default function Quiz() {
     );
   }
 
-  // ❓ During Quiz
   return (
     <PageWrapper>
       <CenterContent>
@@ -360,7 +386,7 @@ export default function Quiz() {
               </Typography>
             </Grid>
             <Grid item xs={4}>
-              <Timer duration={30} onTimeout={() => handleAnswer(false)} progress={progress} />
+              <Timer duration={30} onTimeout={() => handleAnswer(false, true)} progress={progress} />
             </Grid>
           </Grid>
 
@@ -371,6 +397,7 @@ export default function Quiz() {
               onAnswer={handleAnswer}
               showHint
               options={settings.types}
+              showAnswer={showAnswer}
             />
           </Box>
 
